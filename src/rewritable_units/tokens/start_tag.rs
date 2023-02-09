@@ -78,9 +78,10 @@ impl<'i> StartTag<'i> {
     }
 
     #[inline]
-    pub fn retain_attributes_mut<F>(&mut self, f: F)
+    pub fn retain_attributes_mut<S, F>(&mut self, f: F)
         where
-            F: FnMut(&Attribute) -> AttributeOp, {
+            S: AsRef<str>,
+            F: FnMut(&Attribute) -> AttributeOp<S> {
         if self.attributes.retain_attributes_mut(f) {
             self.raw = None;
         }

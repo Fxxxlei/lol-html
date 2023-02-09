@@ -188,9 +188,10 @@ impl<'r, 't> Element<'r, 't> {
 
     /// Iterates over the element's attributes and applies the operation returned by the callback.
     #[inline]
-    pub fn retain_attributes_mut<F>(&mut self, f: F)
+    pub fn retain_attributes_mut<S, F>(&mut self, f: F)
         where
-            F: FnMut(&Attribute) -> AttributeOp, {
+            S: AsRef<str>,
+            F: FnMut(&Attribute) -> AttributeOp<S>, {
         self.start_tag.retain_attributes_mut(f);
     }
 
@@ -869,7 +870,7 @@ mod tests {
 
         for (html, enc) in encoded("<Foo Foo1இ=Bar1 Foo2இ=Bar2 Foo3இ=Bar3>") {
             rewrite_element(&html, enc, "foo", |el| {
-                el.retain_attributes_mut(|attr|{
+                el.retain_attributes_mut(|attr| {
                     match attr.name().as_str() {
                         "foo1இ" => AttributeOp::Remove,
                         "foo2இ" => AttributeOp::Replace("Bar4".to_string()),
@@ -937,7 +938,7 @@ mod tests {
     #[test]
     fn set_content_after() {
         for (html, enc) in
-            encoded("<div><span>Hi<inner-remove-me>RemoveŴ</inner-remove-me></span></div>")
+        encoded("<div><span>Hi<inner-remove-me>RemoveŴ</inner-remove-me></span></div>")
         {
             let output = rewrite_element(&html, enc, "span", |el| {
                 el.prepend("<prepended>", ContentType::Html);
@@ -962,7 +963,7 @@ mod tests {
     #[test]
     fn replace() {
         for (html, enc) in
-            encoded("<div><span>Hi<inner-remove-me>Remove㘗</inner-remove-me></span></div>")
+        encoded("<div><span>Hi<inner-remove-me>Remove㘗</inner-remove-me></span></div>")
         {
             let output = rewrite_element(&html, enc, "span", |el| {
                 el.prepend("<prepended>", ContentType::Html);
@@ -991,7 +992,7 @@ mod tests {
     #[test]
     fn remove() {
         for (html, enc) in
-            encoded("<div><span㗵>Hi<inner-remove-me>Remove</inner-remove-me></span㗵></div>")
+        encoded("<div><span㗵>Hi<inner-remove-me>Remove</inner-remove-me></span㗵></div>")
         {
             let output = rewrite_element(&html, enc, "span㗵", |el| {
                 el.prepend("<prepended>", ContentType::Html);
