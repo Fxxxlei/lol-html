@@ -53,7 +53,7 @@ pub mod errors {
 pub mod html_content {
     pub use super::rewritable_units::{
         Attribute, Comment, ContentType, Doctype, DocumentEnd, Element, EndTag, EndTagError,
-        StartTag, TextChunk, UserData,
+        StartTag, TextChunk, UserData, AttributeOp,
     };
 
     pub use super::html::TextType;

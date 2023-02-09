@@ -1,4 +1,4 @@
-use super::{Attribute, AttributeNameError, Attributes};
+use super::{Attribute, AttributeNameError, Attributes, AttributeOp};
 use super::{Mutations, Serialize, Token};
 use crate::base::Bytes;
 use crate::html::Namespace;
@@ -73,6 +73,15 @@ impl<'i> StartTag<'i> {
     #[inline]
     pub fn remove_attribute(&mut self, name: &str) {
         if self.attributes.remove_attribute(name) {
+            self.raw = None;
+        }
+    }
+
+    #[inline]
+    pub fn retain_attributes_mut<F>(&mut self, f: F)
+        where
+            F: FnMut(&Attribute) -> AttributeOp, {
+        if self.attributes.retain_attributes_mut(f) {
             self.raw = None;
         }
     }

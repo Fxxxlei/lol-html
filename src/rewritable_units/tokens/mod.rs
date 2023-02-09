@@ -4,7 +4,7 @@ mod capturer;
 use super::Mutations;
 
 pub(super) use self::attributes::Attributes;
-pub use self::attributes::{Attribute, AttributeNameError};
+pub use self::attributes::{Attribute, AttributeNameError, AttributeOp};
 pub use self::capturer::*;
 
 pub trait Serialize {

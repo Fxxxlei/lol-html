@@ -188,6 +188,28 @@ impl<'i> Attributes<'i> {
         false
     }
 
+    pub fn retain_attributes_mut<F>(&mut self, mut f: F) -> bool
+        where
+            F: FnMut(&Attribute) -> AttributeOp, {
+        let mut modified = false;
+
+        self.as_mut_vec().retain_mut(|item|
+            match f(item) {
+                AttributeOp::Retain => true,
+                AttributeOp::Remove => {
+                    modified = true;
+                    false
+                }
+                AttributeOp::Replace(new_value) => {
+                    modified = true;
+                    item.set_value(&new_value);
+                    true
+                }
+            });
+
+        modified
+    }
+
     fn init_items(&self) -> Vec<Attribute<'i>> {
         self.attribute_buffer
             .borrow()
@@ -250,4 +272,14 @@ impl Serialize for Attributes<'_> {
             }
         }
     }
+}
+
+/// An operation on an existing attribute
+pub enum AttributeOp {
+    /// Retains the attribute without modifying it
+    Retain,
+    /// Removes the attribute
+    Remove,
+    /// Replaces the attribute's value
+    Replace(String),
 }

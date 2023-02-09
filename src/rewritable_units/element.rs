@@ -1,4 +1,4 @@
-use super::{Attribute, AttributeNameError, ContentType, EndTag, Mutations, StartTag};
+use super::{Attribute, AttributeNameError, ContentType, EndTag, Mutations, StartTag, AttributeOp};
 use crate::base::Bytes;
 use crate::rewriter::{EndTagHandler, HandlerResult};
 use encoding_rs::Encoding;
@@ -184,6 +184,14 @@ impl<'r, 't> Element<'r, 't> {
     #[inline]
     pub fn remove_attribute(&mut self, name: &str) {
         self.start_tag.remove_attribute(name);
+    }
+
+    /// Iterates over the element's attributes and applies the operation returned by the callback.
+    #[inline]
+    pub fn retain_attributes_mut<F>(&mut self, f: F)
+        where
+            F: FnMut(&Attribute) -> AttributeOp, {
+        self.start_tag.retain_attributes_mut(f);
     }
 
     /// Inserts `content` before the element.
@@ -851,6 +859,29 @@ mod tests {
 
                 assert!(el.attributes().is_empty(), "Encoding: {}", enc.name());
                 assert_eq!(el.get_attribute("foo2இ"), None, "Encoding: {}", enc.name());
+            });
+        }
+    }
+
+    #[test]
+    fn retain_attr() {
+        use crate::rewritable_units::AttributeOp;
+
+        for (html, enc) in encoded("<Foo Foo1இ=Bar1 Foo2இ=Bar2 Foo3இ=Bar3>") {
+            rewrite_element(&html, enc, "foo", |el| {
+                el.retain_attributes_mut(|attr|{
+                    match attr.name().as_str() {
+                        "foo1இ" => AttributeOp::Remove,
+                        "foo2இ" => AttributeOp::Replace("Bar4".to_string()),
+                        _ => AttributeOp::Retain,
+                    }
+                });
+                el.remove_attribute("Unknown");
+
+                assert_eq!(el.attributes().len(), 2, "Encoding: {}", enc.name());
+                assert_eq!(el.get_attribute("foo1இ"), None, "Encoding: {}", enc.name());
+                assert_eq!(el.get_attribute("foo2இ").unwrap(), "Bar4", "Encoding: {}", enc.name());
+                assert_eq!(el.get_attribute("foo3இ").unwrap(), "Bar3", "Encoding: {}", enc.name());
             });
         }
     }
